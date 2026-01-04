@@ -1,0 +1,16 @@
+# Build output
+bin/
+
+# macOS
+.DS_Store
+*.swp
+
+# IDE
+.vscode/
+.idea/
+
+# Debug logs
+*.log
+
+# Local config
+.claude/

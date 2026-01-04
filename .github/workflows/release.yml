@@ -1,0 +1,99 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build for Apple Silicon
+        run: |
+          swiftc -O -target arm64-apple-macosx11.0 \
+            -o pulse-notify \
+            src/PulseNotify.swift
+          chmod +x pulse-notify
+
+      - name: Verify binary
+        run: |
+          file pulse-notify
+          ./pulse-notify --help 2>&1 || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-notify
+          path: pulse-notify
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pulse-notify
+          path: release
+
+      - name: Create checksum
+        run: |
+          cd release
+          chmod +x pulse-notify
+          sha256sum pulse-notify > checksums.txt
+          cat checksums.txt
+
+      - name: Determine version
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          TAG_REF: ${{ github.ref }}
+        run: |
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "version=${INPUT_VERSION}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${TAG_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
+          files: release/*
+          body: |
+            ## Pulse Notify
+
+            macOS screen-edge breathing light notification for Claude Code hooks.
+
+            ### Quick Install
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/neokn/claude-notification-hook/main/install.sh | bash
+            ```
+
+            ### Requirements
+            - macOS 11.0+
+            - Apple Silicon (M1/M2/M3/M4)
+
+            ### Verify Checksum
+            ```bash
+            sha256sum -c checksums.txt
+            ```
