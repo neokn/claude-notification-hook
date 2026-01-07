@@ -136,6 +136,10 @@ Add to `~/.claude/settings.json`:
           {
             "type": "command",
             "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/claude-notification-hook/bin/tts-notify"
           }
         ]
       }
@@ -143,6 +147,49 @@ Add to `~/.claude/settings.json`:
   }
 }
 ```
+
+## Text-to-Speech (TTS) Notification
+
+The `tts-notify` script uses macOS native `say` command to read Claude's response aloud when tasks complete.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TTS_VOICE` | `Samantha` | Voice name (see available voices below) |
+| `TTS_RATE` | `180` | Speech rate (words per minute) |
+
+### Available Voices
+
+List all voices: `say -v '?'`
+
+Common voices:
+- **English:** `Samantha`, `Alex`, `Victoria`, `Daniel` (UK)
+- **Chinese:** `Ting-Ting` (Mandarin), `Mei-Jia` (Taiwanese Mandarin)
+- **Japanese:** `Kyoko`
+
+### Custom Voice Example
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TTS_VOICE=Ting-Ting TTS_RATE=200 ~/.claude/hooks/claude-notification-hook/bin/tts-notify"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### Disable TTS
+
+Simply remove the `tts-notify` line from your hooks configuration to use visual notification only.
 
 ### Event Types
 

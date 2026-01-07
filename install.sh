@@ -64,6 +64,15 @@ install() {
     fi
     chmod +x "${BIN_DIR}/pulse-notify"
     info "Installed: ${BIN_DIR}/pulse-notify"
+
+    info "Downloading TTS script..."
+    tts_url="https://raw.githubusercontent.com/${REPO}/main/src/tts-notify.sh"
+    if curl -fsSL "$tts_url" -o "${BIN_DIR}/tts-notify" 2>/dev/null; then
+        chmod +x "${BIN_DIR}/tts-notify"
+        info "Installed: ${BIN_DIR}/tts-notify"
+    else
+        info "TTS script not available (optional)"
+    fi
     
     echo ""
     echo -e "${GREEN}${BOLD}✓ Installation complete!${NC}"
@@ -90,7 +99,10 @@ install() {
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass" }]
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass" },
+          { "type": "command", "command": "~/.claude/hooks/claude-notification-hook/bin/tts-notify" }
+        ]
       }
     ]
   }

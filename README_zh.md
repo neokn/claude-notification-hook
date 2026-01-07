@@ -136,6 +136,10 @@ Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
           {
             "type": "command",
             "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass"
+          },
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/claude-notification-hook/bin/tts-notify"
           }
         ]
       }
@@ -143,6 +147,49 @@ Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
   }
 }
 ```
+
+## 語音朗讀 (TTS) 通知
+
+`tts-notify` 腳本使用 macOS 原生的 `say` 指令，在任務完成時朗讀 Claude 的回應。
+
+### 環境變數
+
+| 變數 | 預設值 | 說明 |
+|------|--------|------|
+| `TTS_VOICE` | `Samantha` | 語音名稱（見下方可用語音） |
+| `TTS_RATE` | `180` | 語速（每分鐘字數） |
+
+### 可用語音
+
+列出所有語音：`say -v '?'`
+
+常用語音：
+- **英文：** `Samantha`, `Alex`, `Victoria`, `Daniel` (英式)
+- **中文：** `Ting-Ting` (普通話), `Mei-Jia` (台灣國語)
+- **日文：** `Kyoko`
+
+### 自訂語音範例
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TTS_VOICE=Ting-Ting TTS_RATE=200 ~/.claude/hooks/claude-notification-hook/bin/tts-notify"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+### 停用語音朗讀
+
+只需從 hooks 設定中移除 `tts-notify` 這一行即可僅使用視覺通知。
 
 ### 事件類型說明
 
