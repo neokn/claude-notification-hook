@@ -68,8 +68,26 @@ curl -fsSL https://raw.githubusercontent.com/neokn/claude-notification-hook/main
 
 **可用的系統音效：**
 ```
-Basso, Blow, Bottle, Frog, Funk, Glass, Hero, 
+Basso, Blow, Bottle, Frog, Funk, Glass, Hero,
 Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
+```
+
+### 語音參數 (Text-to-Speech)
+
+| 參數 | 預設值 | 說明 |
+|------|--------|------|
+| `--speak` | - | 要唸出的訊息（stdin 沒有訊息時的備用） |
+| `--voice` | `Ralph` | macOS 語音名稱 |
+
+**語音優先順序：** stdin 的 `message` 欄位 → `--speak` 參數 → 不唸
+
+當被 Claude Code hook 觸發時，程式會自動讀取 stdin JSON 的 `message` 欄位並唸出來。`--speak` 是給沒有 message 的 hook（如 `Stop`）使用的備用方案。
+
+**列出可用語音：**
+```bash
+say -v '?'                    # 所有語音
+say -v '?' | grep Taiwan      # 台灣中文語音
+say -v '?' | grep en_US       # 美式英文語音
 ```
 
 ## 使用範例
@@ -92,6 +110,12 @@ Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
 
 # 慢速冥想模式
 ./pulse-notify -c purple --breath-cycle 8 --exhale-sigma 1.5
+
+# 使用台灣中文語音
+./pulse-notify -c green --speak "任務完成" --voice Meijia
+
+# 測試 stdin 訊息（模擬 Claude hook）
+echo '{"message": "需要授權"}' | ./pulse-notify -c red
 ```
 
 ## Claude Code Hook 設定
@@ -135,7 +159,7 @@ Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass"
+            "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass --speak 'Mission accomplished' --voice Meijia"
           }
         ]
       }
@@ -146,12 +170,14 @@ Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
 
 ### 事件類型說明
 
-| 事件 | 顏色 | 音效 | 用途 |
-|------|------|------|------|
-| `permission_prompt` | 紅色 | Ping | 請求授權，需要注意 |
-| `idle_prompt` | 藍色 | Blow | 等待輸入中 |
-| `elicitation_dialog` | 紫色 | Pop | 互動對話/提問 |
-| `Stop` | 橘色 | Glass | 任務完成 |
+| 事件 | 顏色 | 音效 | 語音 | 用途 |
+|------|------|------|------|------|
+| `permission_prompt` | 紅色 | Ping | 自動 (stdin) | 請求授權，需要注意 |
+| `idle_prompt` | 藍色 | Blow | 自動 (stdin) | 等待輸入中 |
+| `elicitation_dialog` | 紫色 | Pop | 自動 (stdin) | 互動對話/提問 |
+| `Stop` | 橘色 | Glass | "Mission accomplished" | 任務完成 |
+
+> **備註：** Notification hook 會自動唸出 Claude stdin JSON 中的 `message` 欄位。`Stop` hook 因為沒有 message，所以使用 `--speak` 作為備用方案。
 
 ## 授權
 

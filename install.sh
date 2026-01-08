@@ -90,7 +90,7 @@ install() {
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass" }]
+        "hooks": [{ "type": "command", "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass --speak 'Mission accomplished' --voice Daniel" }]
       }
     ]
   }

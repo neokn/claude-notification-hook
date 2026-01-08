@@ -1,0 +1,44 @@
+{
+    "model": "opus",
+    "hooks": {
+        "Notification": [
+            {
+                "matcher": "permission_prompt",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c red -s Ping"
+                    }
+                ]
+            },
+            {
+                "matcher": "idle_prompt",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c blue -s Blow"
+                    }
+                ]
+            },
+            {
+                "matcher": "elicitation_dialog",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c purple -s Pop"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass --speak 'Mission accomplished' --voice Meijia"
+                    }
+                ]
+            }
+        ]
+    }
+}

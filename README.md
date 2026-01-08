@@ -68,8 +68,26 @@ curl -fsSL https://raw.githubusercontent.com/neokn/claude-notification-hook/main
 
 **Available system sounds:**
 ```
-Basso, Blow, Bottle, Frog, Funk, Glass, Hero, 
+Basso, Blow, Bottle, Frog, Funk, Glass, Hero,
 Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
+```
+
+### Speech (Text-to-Speech)
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--speak` | - | Message to speak (fallback if no stdin message) |
+| `--voice` | `Ralph` | macOS voice name |
+
+**Speech priority:** stdin `message` field → `--speak` parameter → no speech
+
+When triggered by Claude Code hooks, the program automatically reads the `message` field from stdin JSON and speaks it. Use `--speak` as a fallback for hooks without messages (like `Stop`).
+
+**List available voices:**
+```bash
+say -v '?'                    # All voices
+say -v '?' | grep Taiwan      # Taiwan Chinese voices
+say -v '?' | grep en_US       # US English voices
 ```
 
 ## Examples
@@ -92,6 +110,12 @@ Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
 
 # Slow meditation mode
 ./pulse-notify -c purple --breath-cycle 8 --exhale-sigma 1.5
+
+# With speech
+./pulse-notify -c orange -s Glass --speak "Mission accomplished" --voice Daniel
+
+# Test stdin message (simulating Claude hook)
+echo '{"message": "Permission needed"}' | ./pulse-notify -c red
 ```
 
 ## Claude Code Hook Configuration
@@ -135,7 +159,7 @@ Add to `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass"
+            "command": "~/.claude/hooks/claude-notification-hook/bin/pulse-notify -c orange -s Glass --speak 'Mission accomplished' --voice Meijia"
           }
         ]
       }
@@ -146,12 +170,14 @@ Add to `~/.claude/settings.json`:
 
 ### Event Types
 
-| Event | Color | Sound | Purpose |
-|-------|-------|-------|---------|
-| `permission_prompt` | Red | Ping | Permission request, needs attention |
-| `idle_prompt` | Blue | Blow | Waiting for input |
-| `elicitation_dialog` | Purple | Pop | Interactive dialog/question |
-| `Stop` | Orange | Glass | Task completed |
+| Event | Color | Sound | Speech | Purpose |
+|-------|-------|-------|--------|---------|
+| `permission_prompt` | Red | Ping | Auto (stdin) | Permission request, needs attention |
+| `idle_prompt` | Blue | Blow | Auto (stdin) | Waiting for input |
+| `elicitation_dialog` | Purple | Pop | Auto (stdin) | Interactive dialog/question |
+| `Stop` | Orange | Glass | "Mission accomplished" | Task completed |
+
+> **Note:** Notification hooks automatically speak the `message` field from Claude's stdin JSON. The `Stop` hook uses `--speak` as a fallback since it doesn't include a message.
 
 ## License
 

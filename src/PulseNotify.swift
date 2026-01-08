@@ -2,6 +2,25 @@
 
 import Cocoa
 import SwiftUI
+import Foundation
+
+// MARK: - Hook Input (from Claude Code stdin)
+struct HookInput: Decodable {
+    let message: String?
+}
+
+func readStdinMessage() -> String? {
+    // Check if stdin has data (non-blocking)
+    let stdin = FileHandle.standardInput
+    let data = stdin.availableData
+    guard !data.isEmpty else { return nil }
+
+    // Try to parse JSON and extract message
+    if let input = try? JSONDecoder().decode(HookInput.self, from: data) {
+        return input.message
+    }
+    return nil
+}
 
 // MARK: - Configuration
 struct NotifyConfig {
@@ -19,8 +38,10 @@ struct NotifyConfig {
     let minBlurRadius: CGFloat
     let maxBlurRadius: CGFloat
     let soundName: String?
+    let speakMessage: String?
+    let speakVoice: String
 
-    static func from(args: [String]) -> NotifyConfig {
+    static func from(args: [String], stdinMessage: String? = nil) -> NotifyConfig {
         var color: NSColor = .systemOrange
         var duration: Double = 8.0
         var breathCycle: Double = 4.0
@@ -35,6 +56,8 @@ struct NotifyConfig {
         var minBlurRadius: CGFloat = 20
         var maxBlurRadius: CGFloat = 45
         var soundName: String? = "Ping"
+        var speakMessage: String? = nil
+        var speakVoice: String = "Ralph"
 
         for (index, arg) in args.enumerated() {
             switch arg {
@@ -86,9 +109,16 @@ struct NotifyConfig {
                 if index + 1 < args.count { soundName = args[index + 1] }
             case "--no-sound":
                 soundName = nil
+            case "--speak":
+                if index + 1 < args.count { speakMessage = args[index + 1] }
+            case "--voice":
+                if index + 1 < args.count { speakVoice = args[index + 1] }
             default: break
             }
         }
+
+        // Priority: stdin message > --speak parameter > nil
+        let finalMessage = stdinMessage ?? speakMessage
 
         return NotifyConfig(
             color: color, duration: duration, breathCycle: breathCycle,
@@ -97,7 +127,8 @@ struct NotifyConfig {
             minGlowHeight: minGlowHeight, maxGlowHeight: maxGlowHeight,
             minGlowWidth: minGlowWidth, maxGlowWidth: maxGlowWidth,
             minBlurRadius: minBlurRadius, maxBlurRadius: maxBlurRadius,
-            soundName: soundName
+            soundName: soundName,
+            speakMessage: finalMessage, speakVoice: speakVoice
         )
     }
 
@@ -106,6 +137,14 @@ struct NotifyConfig {
         if let sound = NSSound(contentsOfFile: "/System/Library/Sounds/\(name).aiff", byReference: true) {
             sound.play()
         }
+    }
+
+    func speak() {
+        guard let message = speakMessage else { return }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/say")
+        process.arguments = ["-v", speakVoice, message]
+        try? process.run()
     }
 }
 
@@ -179,6 +218,7 @@ struct PulseOverlayView: View {
         .ignoresSafeArea()
         .onAppear {
             config.playSound()
+            config.speak()
             startBreathingAnimation()
         }
     }
@@ -249,7 +289,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-let config = NotifyConfig.from(args: Array(CommandLine.arguments.dropFirst()))
+// Read stdin message from Claude hook (if any)
+let stdinMessage = readStdinMessage()
+
+let config = NotifyConfig.from(args: Array(CommandLine.arguments.dropFirst()), stdinMessage: stdinMessage)
 let delegate = AppDelegate(config: config)
 let app = NSApplication.shared
 app.delegate = delegate
