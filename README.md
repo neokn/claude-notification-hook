@@ -59,12 +59,22 @@ curl -fsSL https://raw.githubusercontent.com/neokn/claude-notification-hook/main
 | `--min-blur` | `20` | Min blur radius (px) |
 | `--max-blur` | `45` | Max blur radius (px) |
 
-### Sound
+### Audio
+
+Sound and speech are independent switches, giving three audio modes:
+
+| Mode | System Sound | Speech | How to trigger |
+|------|:------------:|:------:|----------------|
+| **Fully silent** | ✗ | ✗ | `--mute` (glow only) |
+| **Sound only** | ✓ | ✗ | `--no-voice`, or simply omit any message |
+| **Sound + speech** | ✓ | ✓ | provide a message via stdin or `--speak` |
+
+#### Sound
 
 | Parameter | Short | Default | Description |
 |-----------|-------|---------|-------------|
-| `--sound` | `-s` | `Ping` | Sound effect name |
-| `--no-sound` | - | - | Disable sound |
+| `--sound` | `-s` | `Ping` | System sound effect name |
+| `--mute` | - | - | Fully silent — disables sound **and** speech (glow only) |
 
 **Available system sounds:**
 ```
@@ -72,12 +82,13 @@ Basso, Blow, Bottle, Frog, Funk, Glass, Hero,
 Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
 ```
 
-### Speech (Text-to-Speech)
+#### Speech (Text-to-Speech)
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--speak` | - | Message to speak (fallback if no stdin message) |
 | `--voice` | `Ralph` | macOS voice name |
+| `--no-voice` | - | Disable speech only — system sound still plays (sound-only mode) |
 
 **Speech priority:** stdin `message` field → `--speak` parameter → no speech
 
@@ -102,8 +113,11 @@ say -v '?' | grep en_US       # US English voices
 # Red error warning (faster breathing)
 ./pulse-notify -c red --breath-cycle 2 -s Basso
 
-# Blue silent mode with large glow
-./pulse-notify -c blue --max-glow-height 200 --no-sound
+# Sound only — speech suppressed even when a message is piped in
+echo '{"message": "ignored"}' | ./pulse-notify -c blue --max-glow-height 200 --no-voice
+
+# Fully silent — glow only, no sound and no speech (even ignores stdin message)
+echo '{"message": "ignored"}' | ./pulse-notify -c blue --mute
 
 # Custom hex color
 ./pulse-notify -c "#FF6B35" -d 10

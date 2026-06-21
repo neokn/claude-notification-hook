@@ -58,6 +58,8 @@ struct NotifyConfig {
         var soundName: String? = "Ping"
         var speakMessage: String? = nil
         var speakVoice: String = "Ralph"
+        var muted = false      // 完全靜音: silence both sound and speech
+        var noVoice = false    // 只有音效: keep sound, suppress speech
 
         for (index, arg) in args.enumerated() {
             switch arg {
@@ -107,8 +109,10 @@ struct NotifyConfig {
                 if index + 1 < args.count { maxBlurRadius = CGFloat(Double(args[index + 1]) ?? 45) }
             case "--sound", "-s":
                 if index + 1 < args.count { soundName = args[index + 1] }
-            case "--no-sound":
-                soundName = nil
+            case "--no-voice":
+                noVoice = true
+            case "--mute":
+                muted = true
             case "--speak":
                 if index + 1 < args.count { speakMessage = args[index + 1] }
             case "--voice":
@@ -117,8 +121,16 @@ struct NotifyConfig {
             }
         }
 
-        // Priority: stdin message > --speak parameter > nil
-        let finalMessage = stdinMessage ?? speakMessage
+        // Audio modes, resolved AFTER the parse loop so argument order never matters:
+        //   --mute      → 完全靜音: no system sound, no speech (glow only)
+        //   --no-voice  → 只有音效: system sound plays, speech suppressed
+        //   (default)   → 音效 + 語音: sound plays, speech reads any message
+        // --mute wins wherever it appears (e.g. `--mute -s Ping` is still silent).
+        if muted { soundName = nil }
+
+        // Speech priority: stdin message > --speak parameter > nil.
+        // Both --mute and --no-voice silence speech entirely.
+        let finalMessage = (muted || noVoice) ? nil : (stdinMessage ?? speakMessage)
 
         return NotifyConfig(
             color: color, duration: duration, breathCycle: breathCycle,

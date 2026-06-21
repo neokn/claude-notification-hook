@@ -59,12 +59,22 @@ curl -fsSL https://raw.githubusercontent.com/neokn/claude-notification-hook/main
 | `--min-blur` | `20` | 最小模糊半徑 (px) |
 | `--max-blur` | `45` | 最大模糊半徑 (px) |
 
-### 音效參數
+### 音訊參數
+
+音效與語音是兩個獨立開關，組合出三種音訊模式：
+
+| 模式 | 系統音效 | 語音 | 觸發方式 |
+|------|:--------:|:----:|----------|
+| **完全靜音** | ✗ | ✗ | `--mute`（只剩光暈） |
+| **只有音效** | ✓ | ✗ | `--no-voice`，或不提供任何訊息 |
+| **音效 + 語音** | ✓ | ✓ | 透過 stdin 或 `--speak` 提供訊息 |
+
+#### 音效
 
 | 參數 | 簡寫 | 預設值 | 說明 |
 |------|------|--------|------|
-| `--sound` | `-s` | `Ping` | 音效名稱 |
-| `--no-sound` | - | - | 靜音模式 |
+| `--sound` | `-s` | `Ping` | 系統音效名稱 |
+| `--mute` | - | - | 完全靜音——音效**與**語音都關閉（只剩光暈） |
 
 **可用的系統音效：**
 ```
@@ -72,12 +82,13 @@ Basso, Blow, Bottle, Frog, Funk, Glass, Hero,
 Morse, Ping, Pop, Purr, Sosumi, Submarine, Tink
 ```
 
-### 語音參數 (Text-to-Speech)
+#### 語音參數 (Text-to-Speech)
 
 | 參數 | 預設值 | 說明 |
 |------|--------|------|
 | `--speak` | - | 要唸出的訊息（stdin 沒有訊息時的備用） |
 | `--voice` | `Ralph` | macOS 語音名稱 |
+| `--no-voice` | - | 只關閉語音——系統音效仍會播放（只有音效模式） |
 
 **語音優先順序：** stdin 的 `message` 欄位 → `--speak` 參數 → 不唸
 
@@ -102,8 +113,11 @@ say -v '?' | grep en_US       # 美式英文語音
 # 紅色錯誤警告（較快呼吸）
 ./pulse-notify -c red --breath-cycle 2 -s Basso
 
-# 藍色靜音模式（大光暈）
-./pulse-notify -c blue --max-glow-height 200 --no-sound
+# 只有音效——即使有 stdin 訊息也不唸（大光暈）
+echo '{"message": "ignored"}' | ./pulse-notify -c blue --max-glow-height 200 --no-voice
+
+# 完全靜音——只剩光暈，無音效也無語音（連 stdin 訊息也不唸）
+echo '{"message": "ignored"}' | ./pulse-notify -c blue --mute
 
 # 自訂 hex 顏色
 ./pulse-notify -c "#FF6B35" -d 10
